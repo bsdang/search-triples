@@ -1,0 +1,543 @@
+<export><workspace name="EA"><query name="Custom-Constraint" focus="true" active="true" content-source="as:9738062318809324871:" mode="xquery">xquery version "1.0-ml";
+
+declare namespace constraint = "http://ea.com/content/models/search-constraints";
+
+import module namespace search = "http://marklogic.com/appservices/search" at "/MarkLogic/appservices/search/search.xqy";
+
+declare variable $options :=
+    &lt;search:options&gt;
+    &lt;search:constraint name="triple-range-query"&gt;    
+    &lt;search:custom facet="false"&gt;
+        &lt;search:parse apply="triple-range-query" ns="http://ea.com/content/models/search-constraints" at="/app/models/search-constraints.xqy"/&gt;
+    &lt;/search:custom&gt;
+    &lt;/search:constraint&gt;
+    &lt;/search:options&gt;;
+
+
+declare function constraint:triple-range-query (
+  $query as element(),
+  $options as element(search:options)
+) as schema-element(cts:query)
+{
+    let $final-query :=
+    &lt;root&gt;{
+      let $triple-query := $query/search:text/node()
+      let $_log := xdmp:log(fn:string-join(("constraint:triple-range-query ** search text ", xdmp:quote($triple-query)), " ") ,"debug")
+      return 
+        cts:triple-range-query(
+          if($triple-query/constraint:triple-subject/text()) then sem:iri($triple-query/constraint:triple-subject) else (), 
+          if($triple-query/constraint:triple-predicate) then sem:iri($triple-query/constraint:triple-predicate) else (), 
+          if($triple-query/constraint:triple-object/text()) then sem:typed-literal($triple-query/constraint:triple-object,$triple-query/constraint:triple-object/@datatype) else (), 
+          if($triple-query/constraint:triple-query-operator/text()) then $triple-query/constraint:triple-query-operator/text() else ()
+          )
+        }
+    &lt;/root&gt;/*
+    let $_log := xdmp:log(fn:string-join((" constraint:triple-range-query ** query is ", xdmp:quote($final-query)), " ") ,"info")
+    return
+        (: not added qtextconst attribute as this is for structured query and we can get more than 1 search:text :)
+        element { fn:node-name($final-query) }
+          {
+            $final-query/@*,
+            $final-query/node()
+         }
+} ;
+
+ let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb/1&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/constraint:triple-predicate&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+return $response
+ </query><query name="Insert-Test-Data" focus="false" active="true" content-source="as:1139495818703990342:" mode="xquery">xquery version "1.0-ml";
+
+import module namespace sem = "http://marklogic.com/semantics" at "/MarkLogic/semantics.xqy";
+      
+xdmp:document-insert(
+    "/test/search-constraints/triples.xml",
+    &lt;sem:triples&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;http://www.w3.org/ns/prov#influencer&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;http://www.w3.org/ns/prov#editorsDefinition&lt;/sem:predicate&gt;
+        &lt;sem:object xml:lang="en"&gt;This property is used as part of the qualified influence pattern. Subclasses of prov:Influence use these subproperties to reference the resource (Entity, Agent, or Activity) whose influence is being qualified.&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;http://www.w3.org/2000/01/rdf-schema#isDefinedBy&lt;/sem:predicate&gt;
+        &lt;sem:object&gt;http://www.w3.org/ns/prov-o#&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;http://marklogic.com/semantics/blank/18234284292844143335&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;http://www.w3.org/2002/07/owl#qualifiedCardinality&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger"&gt;1&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;https://schema.ea.com/ns/raf/checkedout&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#boolean"&gt;true&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb/1&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;https://schema.ea.com/ns/raf/version&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#int"&gt;1&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb/1&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;https://schema.ea.com/ns/raf/long&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#long"&gt;1480675862373&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb/1&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#dateTime"&gt;2002-05-30T09:00:00&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;https://data.ea.com/graph/thing/dateGreater/1&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#dateTime"&gt;2005-05-30T09:00:00&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+        &lt;sem:triple&gt;
+        &lt;sem:subject&gt;https://data.ea.com/graph/thing/dateLesser/1&lt;/sem:subject&gt;
+        &lt;sem:predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/sem:predicate&gt;
+        &lt;sem:object datatype="http://www.w3.org/2001/XMLSchema#dateTime"&gt;2001-05-30T09:00:00&lt;/sem:object&gt;
+        &lt;/sem:triple&gt;
+    &lt;/sem:triples&gt;
+)
+</query><query name="REST-API_TEST" focus="false" active="true" content-source="as:1139495818703990342:" mode="xquery">xquery version "1.0-ml";
+
+let $uri := "http://localhost:8288/v1/search?options=api"
+let $search-request := 
+xdmp:quote(&lt;search:query xmlns="http://marklogic.com/appservices/search" xmlns:search="http://marklogic.com/appservices/search"&gt;
+&lt;search:custom-constraint-query&gt;
+  &lt;search:constraint-name&gt;triple-range-query&lt;/search:constraint-name&gt;
+  &lt;search:text&gt;
+    &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+      &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+      &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;
+      &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/constraint:triple-object&gt;
+      &lt;constraint:triple-query-operator&gt;=&lt;/constraint:triple-query-operator&gt;
+    &lt;/constraint:triple-range-query&gt;  
+  &lt;/search:text&gt;
+&lt;/search:custom-constraint-query&gt;
+&lt;/search:query&gt;)
+return 
+
+  xdmp:http-post($uri,
+     &lt;options xmlns="xdmp:http"&gt;
+       &lt;authentication method="digest"&gt;
+         &lt;username&gt;admin&lt;/username&gt;
+         &lt;password&gt;admin&lt;/password&gt;
+       &lt;/authentication&gt;
+       &lt;data&gt;{$search-request}&lt;/data&gt;
+       &lt;headers&gt;
+         &lt;content-type&gt;application/xml&lt;/content-type&gt;
+       &lt;/headers&gt;
+     &lt;/options&gt;)
+</query><query name="Query 1" focus="false" active="false" content-source="as:12648104126809712932:" mode="xquery">xquery version "1.0-ml";
+
+import module namespace test="http://marklogic.com/roxy/test-helper" at "/test/test-helper.xqy";
+import module namespace c = "http://marklogic.com/roxy/test-config" at "/test/test-config.xqy";
+import module namespace search = "http://marklogic.com/appservices/search" at "/MarkLogic/appservices/search/search.xqy";
+
+import module namespace constraint = "http://ea.com/content/models/search-constraints" at "/app/models/search-constraints.xqy";
+
+declare namespace xdmp = "http://marklogic.com/xdmp";
+declare namespace h = "xdmp:http";
+
+declare variable $options :=
+    &lt;search:options&gt;
+    &lt;search:constraint name="triple-range-query"&gt;    
+    &lt;search:custom facet="false"&gt;
+        &lt;search:parse apply="triple-range-query" ns="http://ea.com/content/models/search-constraints" at="/app/models/search-constraints.xqy"/&gt;
+    &lt;/search:custom&gt;
+    &lt;/search:constraint&gt;
+    &lt;/search:options&gt;;
+
+
+declare function local:test-triple-range-query()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/constraint:triple-object&gt;
+            &lt;constraint:triple-query-operator&gt;=&lt;/constraint:triple-query-operator&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-subject-only()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-predicate-only()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-object-only()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/constraint:triple-object&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-subj-pred()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;          
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-equals()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/constraint:triple-object&gt;
+            &lt;constraint:triple-query-operator&gt;=&lt;/constraint:triple-query-operator&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-all-operators()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/constraint:triple-object&gt;
+            &lt;constraint:triple-query-operator&gt;=&lt;/constraint:triple-query-operator&gt;
+            &lt;constraint:triple-query-operator&gt;=&lt;/constraint:triple-query-operator&gt;
+            &lt;constraint:triple-query-operator&gt;=&lt;/constraint:triple-query-operator&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-no-op-uses-default()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/constraint:triple-object&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-object-string()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#label&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string"&gt;invalidated&lt;/constraint:triple-object&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-object-iri()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://www.w3.org/ns/prov#invalidated&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2000/01/rdf-schema#isDefinedBy&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object&gt;http://www.w3.org/ns/prov-o#&lt;/constraint:triple-object&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-object-non-neg-int()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;http://marklogic.com/semantics/blank/18234284292844143335&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;http://www.w3.org/2002/07/owl#qualifiedCardinality&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger"&gt;1&lt;/constraint:triple-object&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+
+declare function local:test-triple-range-query-object-boolean()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;https://schema.ea.com/ns/raf/checkedout&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#boolean"&gt;true&lt;/constraint:triple-object&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-object-datetime()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb/1&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#dateTime"&gt;2002-05-30T09:00:00&lt;/constraint:triple-object&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-object-datetime-greater()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;https://data.ea.com/graph/thing/dateGreater/1&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#dateTime"&gt;2002-05-30T09:00:00&lt;/constraint:triple-object&gt;
+            &lt;constraint:triple-query-operator&gt;&amp;gt;&lt;/constraint:triple-query-operator&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+declare function local:test-triple-range-query-object-datetime-lesser()
+{
+    let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;https://data.ea.com/graph/thing/dateLesser/1&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/constraint:triple-predicate&gt;
+            &lt;constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#dateTime"&gt;2002-05-30T09:00:00&lt;/constraint:triple-object&gt;
+            &lt;constraint:triple-query-operator&gt;&amp;lt;&lt;/constraint:triple-query-operator&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+    let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+   return 
+     test:assert-equal(xs:integer($response/@total), 1)
+};
+
+local:test-triple-range-query(),
+local:test-triple-range-query-subject-only(),
+local:test-triple-range-query-predicate-only(),
+local:test-triple-range-query-subj-pred(),
+local:test-triple-range-query-equals(),
+local:test-triple-range-query-all-operators(),
+local:test-triple-range-query-no-op-uses-default(),
+local:test-triple-range-query-object-string(),
+local:test-triple-range-query-object-iri(),
+local:test-triple-range-query-object-boolean(),
+local:test-triple-range-query-object-datetime(),
+local:test-triple-range-query-object-datetime-greater(),
+local:test-triple-range-query-object-datetime-lesser()
+
+
+</query><query name="Query 2" focus="false" active="true" content-source="as:9738062318809324871:" mode="xquery">xquery version "1.0-ml";
+
+declare namespace constraint = "http://ea.com/content/models/search-constraints";
+
+import module namespace search = "http://marklogic.com/appservices/search" at "/MarkLogic/appservices/search/search.xqy";
+
+declare variable $options :=
+    &lt;search:options&gt;
+    &lt;search:constraint name="triple-range-query"&gt;    
+    &lt;search:custom facet="false"&gt;
+        &lt;search:parse apply="triple-range-query" ns="http://ea.com/content/models/search-constraints" at="/app/models/search-constraints.xqy"/&gt;
+    &lt;/search:custom&gt;
+    &lt;/search:constraint&gt;
+    &lt;/search:options&gt;;
+
+
+declare function constraint:triple-range-query (
+  $query as element(),
+  $options as element(search:options)
+) as schema-element(cts:query)
+{
+    let $final-query :=
+    &lt;root&gt;{
+      let $triple-query := $query/search:text/node()
+      let $_log := xdmp:log(fn:string-join(("constraint:triple-range-query ** search text ", xdmp:quote($triple-query)), " ") ,"debug")
+      return 
+        cts:triple-range-query(
+          if($triple-query/constraint:triple-subject/text()) then sem:iri($triple-query/constraint:triple-subject) else (), 
+          if($triple-query/constraint:triple-predicate) then sem:iri($triple-query/constraint:triple-predicate) else (), 
+          if($triple-query/constraint:triple-object/text()) then sem:typed-literal($triple-query/constraint:triple-object,$triple-query/constraint:triple-object/@datatype) else (), 
+          if($triple-query/constraint:triple-query-operator/text()) then $triple-query/constraint:triple-query-operator/text() else ()
+          )
+        }
+    &lt;/root&gt;/*
+    let $_log := xdmp:log(fn:string-join((" constraint:triple-range-query ** query is ", xdmp:quote($final-query)), " ") ,"info")
+    return
+        (: not added qtextconst attribute as this is for structured query and we can get more than 1 search:text :)
+        element { fn:node-name($final-query) }
+          {
+            $final-query/@*,
+            $final-query/node()
+         }
+} ;
+
+ let $query := 
+      &lt;search:query&gt;
+        &lt;search:text&gt;
+          &lt;constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints"&gt;
+            &lt;constraint:triple-subject&gt;https://data.ea.com/graph/thing/f582a95e-1126-4715-a455-500b8aeeadeb/1&lt;/constraint:triple-subject&gt;
+            &lt;constraint:triple-predicate&gt;https://schema.ea.com/ns/raf/datetime&lt;/constraint:triple-predicate&gt;
+          &lt;/constraint:triple-range-query&gt;  
+        &lt;/search:text&gt;       
+      &lt;/search:query&gt;
+let $response :=
+      search:resolve(
+        constraint:triple-range-query($query,$options)
+      ,$options)
+return $response
+ </query></workspace></export>

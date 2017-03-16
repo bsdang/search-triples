@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<search:options xmlns:search="http://marklogic.com/appservices/search">  
+    <search:constraint name="triple-range-query">    
+        <search:custom facet="false">
+            <search:parse apply="triple-range-query" ns="http://ea.com/content/models/search-constraints" at="/app/models/search-constraints.xqy"/>
+        </search:custom>
+    </search:constraint>     
+</search:options>
+

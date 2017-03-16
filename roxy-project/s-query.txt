@@ -1,0 +1,13 @@
+<search:query xmlns="http://marklogic.com/appservices/search" xmlns:search="http://marklogic.com/appservices/search">
+<search:custom-constraint-query>
+  <search:constraint-name>triple-range-query</search:constraint-name>
+  <search:text>
+    <constraint:triple-range-query xmlns:constraint="http://ea.com/content/models/search-constraints">
+      <constraint:triple-subject>http://www.w3.org/ns/prov#invalidated</constraint:triple-subject>
+      <constraint:triple-predicate>http://www.w3.org/2000/01/rdf-schema#label</constraint:triple-predicate>
+      <constraint:triple-object datatype="http://www.w3.org/2001/XMLSchema#string">invalidated</constraint:triple-object>
+      <constraint:triple-query-operator>=</constraint:triple-query-operator>
+    </constraint:triple-range-query>  
+  </search:text>
+</search:custom-constraint-query>
+</search:query>
