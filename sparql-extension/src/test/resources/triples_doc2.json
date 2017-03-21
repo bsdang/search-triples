@@ -1,0 +1,22 @@
+{
+	"name": "test name2",
+	"triples": [{
+		"triple": {
+			"subject": "/test2",
+			"predicate": "/pred2",
+			"object": {
+				"datatype": "http://www.w3.org/2001/XMLSchema#string",
+				"value": "name2"
+			}
+		}
+	}, {
+		"triple": {
+			"subject": "/test2",
+			"predicate": "/pred2",
+			"object": {
+				"datatype": "http://www.w3.org/2001/XMLSchema#string",
+				"value": "somethingelse2"
+			}
+		}
+	}]
+}
