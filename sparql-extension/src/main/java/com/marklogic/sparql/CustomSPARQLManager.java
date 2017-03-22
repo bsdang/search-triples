@@ -26,7 +26,7 @@ import com.marklogic.client.util.RequestParameters;
 
 public class CustomSPARQLManager extends ResourceManager {
 
-    static final public String NAME = "cs-ea-docs";
+    static final public String NAME = "sparql-extension";
 
     public CustomSPARQLManager(DatabaseClient client) {
         super();
@@ -51,7 +51,8 @@ public class CustomSPARQLManager extends ResourceManager {
         AbstractWriteHandle input = getWriteHandle(qdef, params, false);
         
         // input is a fully-formed XML request so it could be passed via an invoke instead to see if that's faster
-
+        //System.out.println(input);
+        
         return services.post(params, input, handle);
     }
 

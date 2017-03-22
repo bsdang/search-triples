@@ -15,6 +15,7 @@ import com.marklogic.client.io.InputStreamHandle;
 import com.marklogic.client.io.JacksonHandle;
 import com.marklogic.client.query.StructuredQueryBuilder;
 import com.marklogic.client.query.StructuredQueryDefinition;
+import com.marklogic.client.semantics.SPARQLBindings;
 import com.marklogic.client.semantics.SPARQLQueryDefinition;
 import com.marklogic.client.semantics.SPARQLQueryManager;
 import com.marklogic.sparql.CustomSPARQLManager;
@@ -24,7 +25,7 @@ public class CustomSPARQLManagerTest {
     public static final String TEST_DIR = "/test/";
 
     private static DatabaseClient getClient() {
-        return DatabaseClientFactory.newClient("localhost", 8042, "admin", "admin", Authentication.DIGEST);
+        return DatabaseClientFactory.newClient("localhost", 8042, "admin", "admin-jkerr", Authentication.DIGEST);
     }
 
     @BeforeClass
@@ -59,6 +60,9 @@ public class CustomSPARQLManagerTest {
         String sparql = "SELECT * WHERE { </test1> ?p ?o. }";
         sparqlDef.setSparql(sparql);
         sparqlDef.setOptimizeLevel(0);
+        
+        SPARQLBindings bindings = sparqlDef.getBindings();
+        bindings.bind("a", "x");
         
         StructuredQueryBuilder qb = new StructuredQueryBuilder(OPTIONS_NAME);
         StructuredQueryDefinition queryDef = qb.containerQuery(qb.jsonProperty("name"), qb.term("test name"));
@@ -105,5 +109,68 @@ public class CustomSPARQLManagerTest {
         JsonNode resultNode = result.get();
         assertEquals(0, resultNode.get("headers").get("count").asLong());        
     }
+
+    @Test
+    public void testTripleRangeConstraint() {
+        DatabaseClient client = getClient();
+        
+        SPARQLQueryManager sparqlManager = client.newSPARQLQueryManager();
+        CustomSPARQLManager customSparql = new CustomSPARQLManager(client);
+        
+        SPARQLQueryDefinition sparqlDef = sparqlManager.newQueryDefinition();
+        String sparql = "SELECT * WHERE { ?s ?p ?o. }";
+        sparqlDef.setSparql(sparql);
+        sparqlDef.setOptimizeLevel(0);
+        
+        String subject = null;
+        String predicate = null;
+        String object = "name1";
+        String objectDataType = "http://www.w3.org/2001/XMLSchema#string";
+        String operator = "=";
+        StructuredQueryBuilder qb = new StructuredQueryBuilder(OPTIONS_NAME);
+        StructuredQueryDefinition queryDef =
+        		qb.customConstraint(
+        				"triple-range-query", 
+        				getTripleRangeConstraint(subject, predicate, object, objectDataType, operator)
+        		);
+        sparqlDef.setConstrainingQueryDefinition(queryDef);
+                
+        long start = 1;
+        long pageLength = 10;
+        JacksonHandle result = customSparql.executeSelect(sparqlDef, new JacksonHandle(), start, pageLength, true);
+        //System.out.println(result);
+        
+        JsonNode resultNode = result.get();
+        assertEquals(2, resultNode.get("headers").get("count").asLong());        
+    }
+
+    // leave the objectDataType as null to match an iri 
+	private String getTripleRangeConstraint(String subject, String predicate, String object, String objectDataType, String operator) {
+		StringBuffer constraint = 
+				new StringBuffer("<triple-range-query xmlns=\"http://ea.com/content/models/search-constraints\">");
+		
+        if (subject != null) { 
+        	constraint.append("<triple-subject>").append(subject).append("</triple-subject>");
+        }
+        if (predicate != null) { 
+        	constraint.append("<triple-predicate>").append(predicate).append("</triple-predicate>");
+        }
+        if (object != null) { 
+        	constraint.append("<triple-object");
+        		if (objectDataType != null) {
+        			constraint.append(" datatype=\"").append(objectDataType).append("\">");
+        		} else {
+        			constraint.append(">");
+        		}
+        		constraint.append(object).
+        	append("</triple-object>");
+        }
+        if (operator != null) { 
+        	constraint.append("<triple-query-operator>").append(operator).append("</triple-query-operator>");
+        }        
+        constraint.append("</triple-range-query>");  
+
+		return constraint.toString();
+	}
 
 }
