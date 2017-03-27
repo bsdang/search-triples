@@ -13,6 +13,14 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+<repositories>
+<repository>
+      <id>MarkLogic-releases</id>
+      <name>MarkLogic Releases</name>
+      <url>http://developer.marklogic.com/maven2</url>
+  </repository>
+</repositories>
+
   <dependencies>
   
 <!-- https://mvnrepository.com/artifact/com.marklogic/java-client-api -->
@@ -21,7 +29,11 @@
     <artifactId>java-client-api</artifactId>
     <version>3.0.7</version>
 </dependency>
-    
+<dependency>
+    <groupId>com.marklogic</groupId>
+    <artifactId>marklogic-xcc</artifactId>
+    <version>8.0.6</version>
+</dependency>    
   </dependencies>
   <artifactId>sparql-extension</artifactId>
 </project>

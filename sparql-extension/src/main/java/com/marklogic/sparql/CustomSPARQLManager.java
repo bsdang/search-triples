@@ -40,6 +40,11 @@ public class CustomSPARQLManager extends ResourceManager {
 
     public <T extends SPARQLResultsReadHandle> T executeSelect(SPARQLQueryDefinition qdef, T handle, long start,
             long pageLength, boolean countTotal) {
+    	return executeSelect(qdef, handle, start, pageLength, countTotal, false);
+    }
+    
+    public <T extends SPARQLResultsReadHandle> T executeSelect(SPARQLQueryDefinition qdef, T handle, long start,
+            long pageLength, boolean countTotal, boolean returnDocs) {
         if (qdef == null)
             throw new IllegalArgumentException("qdef cannot be null");
         if (handle == null)
@@ -47,7 +52,7 @@ public class CustomSPARQLManager extends ResourceManager {
 
         // get the initialized service object from the base class
         ResourceServices services = getServices();
-        RequestParameters params = getParams(qdef, start, pageLength, countTotal);
+        RequestParameters params = getParams(qdef, start, pageLength, countTotal, returnDocs);
         AbstractWriteHandle input = getWriteHandle(qdef, params, false);
         
         // input is a fully-formed XML request so it could be passed via an invoke instead to see if that's faster
@@ -56,7 +61,8 @@ public class CustomSPARQLManager extends ResourceManager {
         return services.post(params, input, handle);
     }
 
-    private RequestParameters getParams(SPARQLQueryDefinition qdef, long start, long pageLength, boolean countTotal) {
+    private RequestParameters getParams(SPARQLQueryDefinition qdef, long start, long pageLength, 
+    		boolean countTotal, boolean returnDocs) {
         RequestParameters params = new RequestParameters();
         if (start > 1)
             params.add("start", Long.toString(start));
@@ -64,6 +70,7 @@ public class CustomSPARQLManager extends ResourceManager {
             params.add("pageLength", Long.toString(pageLength));
 
         params.add("count", Boolean.toString(countTotal));
+        params.add("docs", Boolean.toString(returnDocs));
         
         if (qdef.getOptimizeLevel() >= 0) {
             params.add("optimize", Integer.toString(qdef.getOptimizeLevel()));

@@ -1,0 +1,22 @@
+{
+	"name": "doc test 2",
+	"triples": [{
+		"triple": {
+			"subject": "https://content.ea.com/data/DocType1/1-id2",
+			"predicate": "/pred3",
+			"object": {
+				"datatype": "http://www.w3.org/2001/XMLSchema#string",
+				"value": "name4"
+			}
+		}
+	}, {
+		"triple": {
+			"subject": "/test1",
+			"predicate": "/pred1",
+			"object": {
+				"datatype": "http://www.w3.org/2001/XMLSchema#string",
+				"value": "somethingelse4"
+			}
+		}
+	}]
+}

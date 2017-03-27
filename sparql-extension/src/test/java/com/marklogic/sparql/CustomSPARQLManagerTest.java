@@ -43,6 +43,15 @@ public class CustomSPARQLManagerTest {
                 TEST_DIR + "test2.json", 
                 new InputStreamHandle(CustomSPARQLManagerTest.class.getResourceAsStream("/triples_doc2.json"))
         );
+        
+        dm.write(
+                "/content/1/DocType1/id1", 
+                new InputStreamHandle(CustomSPARQLManagerTest.class.getResourceAsStream("/content_1.json"))
+        );        
+        dm.write(
+                "/content/1/DocType1/id2", 
+                new InputStreamHandle(CustomSPARQLManagerTest.class.getResourceAsStream("/content_2.json"))
+        );        
     }
 
     @AfterClass
@@ -172,5 +181,35 @@ public class CustomSPARQLManagerTest {
 
 		return constraint.toString();
 	}
+
+    @Test
+    public void testReturnDocs() {
+        DatabaseClient client = getClient();
+        
+        SPARQLQueryManager sparqlManager = client.newSPARQLQueryManager();
+        CustomSPARQLManager customSparql = new CustomSPARQLManager(client);
+        
+        SPARQLQueryDefinition sparqlDef = sparqlManager.newQueryDefinition();
+        String sparql = "SELECT ?subject WHERE { ?subject </pred3> ?o. }";
+        sparqlDef.setSparql(sparql);
+        sparqlDef.setOptimizeLevel(0);
+        
+        long start = 1;
+        long pageLength = 10;
+        JacksonHandle result = customSparql.executeSelect(sparqlDef, new JacksonHandle(), start, pageLength, true, true);
+        System.out.println(result);
+        
+        JsonNode resultNode = result.get();
+        assertEquals(2, resultNode.get("headers").get("count").asLong()); 
+        
+        JsonNode triples = resultNode.get("content").get("results");
+        assertNotNull(triples);
+
+        JsonNode docs = resultNode.get("docs");
+        assertNotNull(docs);
+
+        // we should get 2 docs back
+        assertEquals(2, docs.size());
+    }
 
 }

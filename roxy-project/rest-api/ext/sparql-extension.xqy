@@ -9,6 +9,10 @@ import module namespace ast = "http://marklogic.com/appservices/search-ast" at "
 declare namespace roxy = "http://marklogic.com/roxy";
 declare namespace rapi = "http://marklogic.com/rest-api";
 
+declare variable $IRI-PREFIX as xs:string := "https://content.ea.com/data/";
+declare variable $URI-PREFIX as xs:string := "/content/";
+
+
 declare variable $app:query-only-options :=
   element search:options {
     element search:return-constraints { fn:false() },
@@ -57,6 +61,10 @@ function app:post(
 
     (: default the count to false :)
     let $do-count := xs:boolean(map:get($params, "count"))
+
+    (: default the docs to false :)
+    let $do-docs := xs:boolean(map:get($params, "docs"))
+
     let $sparql-options := (
       map:get($params,"default-graph-uri") ! ("default-graph=" || .),
       map:get($params,"named-graph-uri") ! ("named-graph=" || .),
@@ -152,6 +160,22 @@ function app:post(
       ' }'
     :)
 
+    (: Most of the SPARQL queries just return a list of subjects. We can translate each :)
+    (: subject into a URI and return the doc for it too. :)
+    (: subject: https://content.ea.com/data/NDSArticle/1-ndsArticle-testing-f43a49d3-8388-4a74-bb10-96d5942bae0e :)
+    (: URI:     /content/1/NDSArticle/ndsArticle-testing-f43a49d3-8388-4a74-bb10-96d5942bae0e :)
+    (: This is an alternating sequence of URI and document to be compatible with the existing code :)
+    let $docs :=
+      if ($do-docs) then
+        let $uris := $results ! app:subject-to-uri(map:get(., "subject"))
+        for $i in cts:search(fn:doc(), cts:document-query($uris), "unfiltered")
+        return object-node {
+          "uri" : xdmp:node-uri($i),
+          "doc" : xdmp:from-json($i)
+        }
+      else
+        ()
+
     let $response := (
       '{ ',
         '"headers" : { ',
@@ -160,6 +184,13 @@ function app:post(
         ' }, ',
         '"content" : ',
           sem:query-results-serialize($results, "json"),
+
+        if ($do-docs) then (
+          ', ',
+          '"docs" : ',
+            xdmp:to-json-string($docs)
+        ) else (),
+
       ' }'
     )
 
@@ -170,6 +201,14 @@ function app:post(
         xdmp:log("SPARQL executed in: " || $elapsed, "debug"),
         document { $response }
     )
+};
+
+declare private function app:subject-to-uri($subject as xs:string) as xs:string {
+  let $parts := fn:tokenize(fn:substring-after($subject, $IRI-PREFIX), "/")
+  let $type := $parts[1]
+  let $num := fn:substring-before($parts[2], "-")
+  let $id := fn:substring-after($parts[2], $num || "-")
+  return $URI-PREFIX || $num || "/" || $type || "/" || $id
 };
 
 declare private function app:sparql-value-of(
